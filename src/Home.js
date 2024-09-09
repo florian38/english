@@ -15401,7 +15401,9 @@ const wordsData = [
     const [score, setScore] = useState(0); // Compteur de score
     const [correctLetters, setCorrectLetters] = useState([]); // Suivi des lettres correctes
     const [showAnswer, setShowAnswer] = useState(false); // Pour révéler la réponse
+    const [isMobile, setIsMobile] = useState(false); // État pour savoir si l'appareil est mobile
     const inputRefs = useRef([]); // Références pour chaque cube (input de chaque lettre)
+    const [shouldFocusFirstCube, setShouldFocusFirstCube] = useState(false);
 
     // Fonction pour initialiser les données depuis un objet
     const initializeData = () => {
@@ -15409,9 +15411,78 @@ const wordsData = [
         setLoading(false); // Arrêter l'indicateur de chargement
     };
 
+    // Fonction pour détecter si l'appareil est mobile
+    const handleResize = () => {
+        setIsMobile(window.innerWidth <= 768); // Considérer un écran mobile si <= 768px
+    };
+
     useEffect(() => {
         initializeData(); // Charger les données à partir de l'objet lors du montage du composant
+        handleResize(); // Vérifier la taille de l'écran au chargement
+
+       window.addEventListener('resize', handleResize); // Écouter les changements de taille de l'écran
+        return () => {
+            window.removeEventListener('resize', handleResize); // Nettoyer l'écouteur d'événements
+        };
     }, []);
+
+
+    // Gérer le focus uniquement après une réponse correcte ou un clic sur "Je ne sais pas"
+    useEffect(() => {
+        if (shouldFocusFirstCube && !isMobile && inputRefs.current[0]) {
+            inputRefs.current[0].focus(); // Mettre le focus sur le premier cube
+            setShouldFocusFirstCube(false); // Réinitialiser l'état après avoir déplacé le focus
+        }
+    }, [shouldFocusFirstCube, isMobile, currentWord]);
+
+    // Appel à la fonction pour choisir un mot lorsque les données sont disponibles
+    useEffect(() => {
+        if (data.length > 0) {
+            chooseRandomWord();
+        }
+    }, [data]);
+
+    
+    // Fonction pour gérer la réponse correcte
+    const handleCorrectAnswer = () => {
+        setScore(score + 1);
+        setTimeout(() => {
+            chooseRandomWord(); // Choisir un nouveau mot après 1 seconde
+            setShouldFocusFirstCube(true); // Activer le focus après la réponse correcte
+        }, 500);
+    };
+
+    // Fonction pour révéler la réponse et forcer le focus
+    const handleShowAnswer = () => {
+        setShowAnswer(true);
+        setShouldFocusFirstCube(true); // Activer le focus après "Je ne sais pas"
+    };
+
+
+    // Fonction pour vérifier si tout le mot est correct
+    const handleLetterChange = (index, event) => {
+        const value = event.target.value.toLowerCase();
+        const newInputValue = [...inputValue];
+
+        if (/^[a-z ]$/.test(value)) { // Vérifier si c'est une lettre ou un espace
+            newInputValue[index] = value; // Ajouter la lettre ou l'espace
+            setInputValue(newInputValue);
+
+            if (index < inputRefs.current.length - 1 && value !== '') {
+                inputRefs.current[index + 1].focus(); // Focus sur la case suivante si une lettre est saisie
+            }
+
+            // Vérification des lettres
+            const newCorrectLetters = [...correctLetters];
+            newCorrectLetters[index] = value === currentWord["a"][index].toLowerCase();
+            setCorrectLetters(newCorrectLetters);
+
+            // Vérifier si tout le mot est correct
+            if (newCorrectLetters.every((letter) => letter === true)) {
+                handleCorrectAnswer(); // Gérer la réponse correcte et activer le focus
+            }
+        }
+    };
 
     // Fonction pour choisir un mot aléatoire de la liste
     const chooseRandomWord = () => {
@@ -15424,79 +15495,52 @@ const wordsData = [
         }
     };
 
-    // Appel à la fonction pour choisir un mot lorsque les données sont disponibles
-    useEffect(() => {
-        if (data.length > 0) {
-            chooseRandomWord();
-        }
-    }, [data]);
-
-    // Focus sur le premier cube lors du chargement ou lors du changement de mot
-    useEffect(() => {
-        if (currentWord) {
+    // Fonction pour gérer la saisie de l'utilisateur dans un seul champ input sur mobile
+    const handleSingleInputChange = (event) => {
+        const value = event.target.value.toLowerCase(); // Récupérer la saisie de l'utilisateur
+        const word = currentWord ? currentWord["a"].toLowerCase() : ''; // Le mot actuel à deviner
+        const newInputValue = value.split(''); // Convertir la saisie en tableau de lettres
+    
+        setInputValue(newInputValue); // Mettre à jour l'état avec les lettres saisies
+    
+        // Créer un tableau pour suivre les lettres correctes
+        const newCorrectLetters = newInputValue.map((letter, index) => {
+            return letter === word[index]; // Vérifier si la lettre est correcte
+        });
+    
+        setCorrectLetters(newCorrectLetters); // Mettre à jour les lettres correctes
+    
+        // Si l'utilisateur a entré le mot correct
+        if (value === word) {
+            setScore(score + 1); // Incrémenter le score
             setTimeout(() => {
-                if (inputRefs.current[0]) {
-                    inputRefs.current[0].focus(); // Mettre le focus sur le premier cube
-                }
-            }, 0);
-        }
-    }, [currentWord]);
-
-    // Fonction pour gérer la saisie de lettres dans les cubes
-    const handleLetterChange = (index, event) => {
-        const value = event.target.value.toLowerCase();
-        const newInputValue = [...inputValue];
-
-        if (/^[a-z ]$/.test(value)) { // Vérifier si c'est une lettre ou un espace
-            newInputValue[index] = value; // Ajouter la lettre ou l'espace
-            setInputValue(newInputValue);
-
-            if (index < inputRefs.current.length - 1) {
-                setTimeout(() => {
-                    if (inputRefs.current[index + 1]) {
-                        inputRefs.current[index + 1].focus();
-                    }
-                }, 0);
-            }
-
-            // Vérification des lettres
-            const newCorrectLetters = [...correctLetters];
-            newCorrectLetters[index] = value === currentWord["a"][index].toLowerCase();
-            setCorrectLetters(newCorrectLetters);
-
-            // Vérifier si tout le mot est correct
-            if (newCorrectLetters.every((letter) => letter === true)) {
-                setScore(score + 1);
-                setTimeout(() => {
-                    chooseRandomWord(); // Choisir un nouveau mot après 1 seconde
-                }, 500);
-            }
+                chooseRandomWord(); // Choisir un nouveau mot après un court délai
+            }, 500);
         }
     };
 
     // Fonction pour gérer le retour arrière (backspace)
     const handleKeyDown = (index, event) => {
         if (event.key === 'Backspace' && inputValue[index] === '') {
+            // Si le champ est vide, on se déplace vers le champ précédent
             if (index > 0) {
                 inputRefs.current[index - 1].focus();
             }
         } else if (event.key === 'Backspace' && inputValue[index] !== '') {
+            // Si le champ n'est pas vide, on efface le contenu du champ actuel
             const newInputValue = [...inputValue];
-            newInputValue[index] = '';
+            newInputValue[index] = ''; // Effacer la lettre actuelle
             setInputValue(newInputValue);
+
             const newCorrectLetters = [...correctLetters];
-            newCorrectLetters[index] = false;
+            newCorrectLetters[index] = false; // Réinitialiser la lettre comme incorrecte
             setCorrectLetters(newCorrectLetters);
+
+            // Remettre le focus sur le champ actuel après suppression
+            inputRefs.current[index].focus();
         }
     };
 
-    // Fonction pour révéler la réponse
-    const handleShowAnswer = () => {
-        setShowAnswer(true);
-        if (inputRefs.current[0]) {
-            inputRefs.current[0].focus();
-        }
-    };
 
     return (
         <div className='container-home'>
@@ -15507,19 +15551,45 @@ const wordsData = [
                 {!loading && !error && currentWord && (
                     <>
                         <p>Mot en français : <strong>{currentWord.un}</strong></p>
-                        <div className="letter-cubes">
-                            {currentWord["a"].split('').map((letter, index) => (
-                                <input
-                                    key={index}
-                                    ref={(el) => (inputRefs.current[index] = el)}
-                                    className={`cube ${correctLetters[index] ? 'correct' : inputValue[index] ? 'incorrect' : ''}`}
-                                    maxLength={1}
-                                    value={inputValue[index] || ''}
-                                    onChange={(e) => handleLetterChange(index, e)}
-                                    onKeyDown={(e) => handleKeyDown(index, e)}
-                                />
-                            ))}
-                        </div>
+                        
+                        {/* Si on est sur mobile, afficher un seul input, sinon les cubes */}
+                        {isMobile ? (
+                        <>
+                            <input
+                                className="mobile-input"
+                                type="text"
+                                value={inputValue.join('')}
+                                onChange={handleSingleInputChange}
+                                placeholder="Tapez votre réponse ici"
+                            />
+
+                            {/* Ajouter l'indicateur de lettres correctes/incorrectes */}
+                            <div className="letter-indicator">
+                                {currentWord["a"].split('').map((letter, index) => (
+                                    <span
+                                        key={index}
+                                        className={`indicator ${correctLetters[index] ? 'correctMobile' : inputValue[index] ? 'incorrectMobile' : ''}`}
+                                    >
+                                        {inputValue[index] || '_'}
+                                    </span>
+                                ))}
+                            </div>
+                        </>
+                        ) : (
+                            <div className="letter-cubes">
+                                {currentWord["a"].split('').map((letter, index) => (
+                                    <input
+                                        key={index}
+                                        ref={(el) => (inputRefs.current[index] = el)}
+                                        className={`cube ${correctLetters[index] ? 'correct' : inputValue[index] ? 'incorrect' : ''}`}
+                                        maxLength={1}
+                                        value={inputValue[index] || ''}
+                                        onChange={(e) => handleLetterChange(index, e)}
+                                        onKeyDown={(e) => handleKeyDown(index, e)}
+                                    />
+                                ))}
+                            </div>
+                        )}
 
                         <p>Score : {score}</p>
 
@@ -15532,3 +15602,4 @@ const wordsData = [
         </div>
     );
 }
+
