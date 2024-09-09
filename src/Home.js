@@ -15391,6 +15391,7 @@ const wordsData = [
       }
     
   ]
+ 
   export default function Home() {
     const [data, setData] = useState([]); // État pour stocker les données
     const [loading, setLoading] = useState(true); // Pour indiquer le chargement
@@ -15446,8 +15447,8 @@ const wordsData = [
         const value = event.target.value.toLowerCase();
         const newInputValue = [...inputValue];
 
-        if (/^[a-z]$/.test(value)) { // Vérifier si c'est une lettre
-            newInputValue[index] = value; // Ajouter la lettre
+        if (/^[a-z ]$/.test(value)) { // Vérifier si c'est une lettre ou un espace
+            newInputValue[index] = value; // Ajouter la lettre ou l'espace
             setInputValue(newInputValue);
 
             if (index < inputRefs.current.length - 1) {
