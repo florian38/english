@@ -1,0 +1,64 @@
+
+/****Component Home*****/
+.container-home {
+    min-height: 100vh;
+    background-color: #121212; /* Couleur de fond sombre */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    color: #e0e0e0; /* Couleur du texte claire */
+}
+
+/*Home*/
+.content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    overflow: hidden;
+}
+
+
+h2 {
+    font-size: 50px;
+}
+
+p {
+    font-size: 22px;
+}
+
+button{
+    width: fit-content;
+    margin: 0 auto;
+    padding: 10px 20px;
+    font-family: 'Montserrat';
+}
+
+.letter-cubes {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.cube {
+    width: 50px;
+    height: 50px;
+    border: 2px solid #333; /* Bordure plus sombre */
+    margin: 5px;
+    font-size: 24px;
+    text-align: center;
+    line-height: 50px;
+    background-color: #1e1e1e; /* Fond des cubes sombre */
+    color: #e0e0e0; /* Couleur de texte claire */
+}
+
+.correct {
+    background-color: #4caf50; /* Vert sombre pour les réponses correctes */
+    color: white;
+}
+
+.incorrect {
+    background-color: #d32f2f; /* Rouge sombre pour les réponses incorrectes */
+    color: white;
+}
