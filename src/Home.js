@@ -15429,11 +15429,13 @@ const wordsData = [
 
     // Gérer le focus uniquement après une réponse correcte ou un clic sur "Je ne sais pas"
     useEffect(() => {
-        if (shouldFocusFirstCube && !isMobile && inputRefs.current[0]) {
-            inputRefs.current[0].focus(); // Mettre le focus sur le premier cube
-            setShouldFocusFirstCube(false); // Réinitialiser l'état après avoir déplacé le focus
-        }
-    }, [shouldFocusFirstCube, isMobile, currentWord]);
+      if (shouldFocusFirstCube && !isMobile && inputRefs.current[0]) {
+          if (inputRefs.current[0]) {
+              inputRefs.current[0].focus(); // Mettre le focus sur le premier cube
+          }
+          setShouldFocusFirstCube(false); // Réinitialiser l'état après avoir déplacé le focus
+      }
+  }, [shouldFocusFirstCube, isMobile, currentWord]);
 
     // Appel à la fonction pour choisir un mot lorsque les données sont disponibles
     useEffect(() => {
@@ -15460,29 +15462,58 @@ const wordsData = [
 
 
     // Fonction pour vérifier si tout le mot est correct
+    // const handleLetterChange = (index, event) => {
+    //     const value = event.target.value.toLowerCase();
+    //     const newInputValue = [...inputValue];
+
+    //     if (/^[a-z ]$/.test(value)) { // Vérifier si c'est une lettre ou un espace
+    //         newInputValue[index] = value; // Ajouter la lettre ou l'espace
+    //         setInputValue(newInputValue);
+
+    //         if (index < inputRefs.current.length - 1 && value !== '') {
+    //             inputRefs.current[index + 1].focus(); // Focus sur la case suivante si une lettre est saisie
+    //         }
+
+    //         // Vérification des lettres
+    //         const newCorrectLetters = [...correctLetters];
+    //         newCorrectLetters[index] = value === currentWord["a"][index].toLowerCase();
+    //         setCorrectLetters(newCorrectLetters);
+
+    //         // Vérifier si tout le mot est correct
+    //         if (newCorrectLetters.every((letter) => letter === true)) {
+    //             handleCorrectAnswer(); // Gérer la réponse correcte et activer le focus
+    //         }
+    //     }
+    // };
     const handleLetterChange = (index, event) => {
-        const value = event.target.value.toLowerCase();
-        const newInputValue = [...inputValue];
-
-        if (/^[a-z ]$/.test(value)) { // Vérifier si c'est une lettre ou un espace
-            newInputValue[index] = value; // Ajouter la lettre ou l'espace
-            setInputValue(newInputValue);
-
-            if (index < inputRefs.current.length - 1 && value !== '') {
-                inputRefs.current[index + 1].focus(); // Focus sur la case suivante si une lettre est saisie
-            }
-
-            // Vérification des lettres
-            const newCorrectLetters = [...correctLetters];
-            newCorrectLetters[index] = value === currentWord["a"][index].toLowerCase();
-            setCorrectLetters(newCorrectLetters);
-
-            // Vérifier si tout le mot est correct
-            if (newCorrectLetters.every((letter) => letter === true)) {
-                handleCorrectAnswer(); // Gérer la réponse correcte et activer le focus
-            }
-        }
-    };
+      const value = event.target.value.toLowerCase();
+      const newInputValue = [...inputValue];
+  
+      if (/^[a-z ]$/.test(value)) { // Vérifier si c'est une lettre ou un espace
+          newInputValue[index] = value; // Ajouter la lettre ou l'espace
+          setInputValue(newInputValue);
+  
+          // Vérification des lettres
+          const newCorrectLetters = [...correctLetters];
+          newCorrectLetters[index] = value === currentWord["a"][index].toLowerCase();
+          setCorrectLetters(newCorrectLetters);
+  
+          // Si la lettre est correcte, passer à la case suivante, sauf si c'est la dernière case
+          if (index < inputRefs.current.length - 1 && value !== '') {
+              // Vérifier si la référence suivante existe avant de définir le focus
+              if (inputRefs.current[index + 1]) {
+                  inputRefs.current[index + 1].focus(); // Focus sur la case suivante si une lettre est saisie
+              }
+          }
+  
+          // Vérifier si tout le mot est correct après la mise à jour de toutes les lettres
+          if (newCorrectLetters.every((letter) => letter === true)) {
+              setTimeout(() => {
+                  handleCorrectAnswer(); // Gérer la réponse correcte et activer le focus
+              }, 500);
+          }
+      }
+  };
 
     // Fonction pour choisir un mot aléatoire de la liste
     const chooseRandomWord = () => {
